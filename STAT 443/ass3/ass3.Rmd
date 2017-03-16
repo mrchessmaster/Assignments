@@ -1,0 +1,111 @@
+---
+title: "STAT 443 Assignment 1"
+author: "David Yin (13922159)"
+date: "24 January, 2017"
+output: html_document
+---
+## Question 1
+
+**a)**
+```{r}
+acma = read.table("Acma.TXT")
+acma <- ts(acma)
+plot(acma, xlab = "Day", ylab = "Closing Price", main = "Acma Ltd. Closing Price by Day")
+acf(acma, main = "Autocorrelation")
+pacf(acma, main = "Partial Autocorrelation")
+```
+
+The acf shows a slow decay, reflective of ... . The pacf shows a sharp cut off at lag 1, suggesting an AR(1) model.
+
+**b)**
+```{r}
+acma_d = diff(acma)
+plot(acma_d, xlab = "Day", ylab = "Change in Closing Price", main = "First-order differencing of ACMA")
+acf(acma_d, main = "Autocorrelation")
+pacf(acma_d, main = "Partial Autocorrelation")
+```
+
+It appears stationary. No obvious trend, and acf shows cut off at lag 0 and no pattern in pacf. Resembles white noise
+
+**c)**
+
+It is ,,, because we expect the first order difference to be white noise, so $X_t - X_{t-1} = Z_t$ where $Z_t$ is white noise. This matches our  expectation of a AR(1) model from part a).
+
+
+
+
+**d)**
+
+```{r}
+mod = arima(acma, order = c(1,0,0))
+mod$sigma2
+```
+
+From running our model on the dataset, we obtain that the variance of $Z_t$ is 0.04065574.
+
+
+
+**e)**
+
+ copy formula
+
+Because the expected values of the $Z_{n+i}$ are 0, our best pick will be $X_n$, the closest actual observation we have to $X_{n+l}$. So it would be $X_{192} = 3.17$.
+
+**f)**
+
+copy formula
+
+
+$e_n(l) = X_{n+l} - \hat{X}_n(l)$
+
+$e_n(l) = X_{n+l} - (\hat{X}_n(l-1))$
+
+
+
+
+
+## Question 2
+
+
+Reorganizing the data into a single time-series column:
+
+```{r}
+dfr = read.csv("dataFraserRiver.csv")
+dfr <- dfr[-1]
+dat = c()
+for (i in 1:99) {
+  dat <- c(dat,dfr[i,])
+}
+dat <- as.numeric(dat)
+dat <- data.frame(dat)
+dat <- ts(dat)
+
+```
+
+Making the training and test data:
+
+```{r}
+flow = window(dat, start = 78*12+1, end = 97*12)
+flow.test = window(dat, start = 97*12+1)
+```
+
+
+```{r}
+plot(flow, xlab = "Month", ylab = "Mean flows", main = "Monthly mean flows of Fraser River")
+acf(flow, main = "Autocorrelation")
+pacf(flow, main = "Partial Autocorrelation")
+```
+
+From the training data, we can see that the plots show high effects in seasonality with lag 12, which suggests the use of first-order differencing.
+
+```{r}
+flow_d = diff(flow, lag = 12)
+plot(flow_d, xlab = "Month", ylab = "Difference (lag 12) in mean flows", main = "Differenced monthly mean flows (without seasonal effect)")
+acf(flow_d, main = "Autocorrelation")
+pacf(flow_d, main = "Partial Autocorrelation")
+```
+
+From the plots, we can see that the data looks much more stationary, although there are still outliers in the middle of ACF and partial ACF plots. From this, we can try to use a ...
+
+
+
