@@ -13,6 +13,10 @@ xbar = inv(A'*A)*A'*p;
 
 b0 = xbar(1); b1 = xbar(2);
 
+% b0 = 19.5539
+% b1 = 19.6045
+
+
 pred = b0 + b1*log(85);
 
 % estimated systolic blood pressure is 106.6501 mmHg
