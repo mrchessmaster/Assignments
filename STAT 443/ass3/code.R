@@ -50,6 +50,7 @@ pacf(flow)
 mod1 = arima(flow, order = c(1,0,0), seasonal = list(order=c(0,1,0), period = 12))
 mod2 = arima(flow, order = c(1,0,0), seasonal = list(order=c(1,1,0), period = 12))
 mod3 = arima(flow, order = c(0,0,0), seasonal = list(order=c(1,1,0), period = 12))
+mod4 = arima(flow, order = c(2,0,0), seasonal = list(order=c(1,1,0), period = 12))
 
 tsdiag(mod1)
 tsdiag(mod2)
@@ -78,10 +79,12 @@ mod = mod2
 
 pred = predict(mod, 24)
 
-plot(pred$pred)
-plot(flow.test)
+plot(pred$pred, col = "red")
+lines(flow.test, col = "blue")
 
-sum((flow.test > pred$pred-1.96*pred$se) & (flow.test < pred$pred+1.96*pred$se))
+sqrt(mean(pred$pred - flow.test)^2)
+
+sum((flow.test > pred$pred-qnorm(0.975)*pred$se) & (flow.test < pred$pred+qnorm(0.975)*pred$se))
 # 22/24 values in 95% confidence interval
 
 

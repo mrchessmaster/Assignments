@@ -1,8 +1,10 @@
 ---
-title: "STAT 443 Assignment 1"
+title: "STAT 443 Assignment 3"
 author: "David Yin (13922159)"
-date: "24 January, 2017"
-output: html_document
+date: "16 March, 2017"
+output:
+  html_document: default
+  pdf_document: default
 ---
 ## Question 1
 
@@ -15,7 +17,7 @@ acf(acma, main = "Autocorrelation")
 pacf(acma, main = "Partial Autocorrelation")
 ```
 
-The acf shows a slow decay, reflective of ... . The pacf shows a sharp cut off at lag 1, suggesting an AR(1) model.
+The acf shows a slow decay, reflective of a typical AR model. The pacf shows a sharp cut off at lag 1, suggesting an AR(1) model.
 
 **b)**
 ```{r}
@@ -25,13 +27,11 @@ acf(acma_d, main = "Autocorrelation")
 pacf(acma_d, main = "Partial Autocorrelation")
 ```
 
-It appears stationary. No obvious trend, and acf shows cut off at lag 0 and no pattern in pacf. Resembles white noise
+It appears stationary. No obvious trend, and acf shows cut off at lag 0 and no pattern in pacf. It resembles white noise.
 
 **c)**
 
-It is ,,, because we expect the first order difference to be white noise, so $X_t - X_{t-1} = Z_t$ where $Z_t$ is white noise. This matches our  expectation of a AR(1) model from part a).
-
-
+It is an AR(1) model, and a random walk specifically. We expected the first order difference to be white noise, so $X_t - X_{t-1} = Z_t$ where $Z_t$ is white noise. So this matched our expectation of a AR(1) model from part a).
 
 
 **d)**
@@ -47,21 +47,43 @@ From running our model on the dataset, we obtain that the variance of $Z_t$ is 0
 
 **e)**
 
- copy formula
+$X_{n+l} = X_{n+l-1} + Z_{n+l} = X_{n+l-2} + Z_{n+l-1} + Z_{n+l} = ... = X_n + Z_{n+1} + ... + Z_{n+l}$
 
 Because the expected values of the $Z_{n+i}$ are 0, our best pick will be $X_n$, the closest actual observation we have to $X_{n+l}$. So it would be $X_{192} = 3.17$.
 
+
 **f)**
-
-copy formula
-
 
 $e_n(l) = X_{n+l} - \hat{X}_n(l)$
 
-$e_n(l) = X_{n+l} - (\hat{X}_n(l-1))$
+
+$e_n(l) = Z_{n+l} + Z_{n+l-1} + ... + Z_{n+1}$
+
+The variance of the error is the sum of the variances of the white noises (covariances of independent white noises are 0), so
+
+$Var(e_n(l)) = l*\sigma^2$
+
+Therefore, the 90% prediction interval is:
+
+$X_n \pm \Phi^{-1}(0.95)\sigma\sqrt{l}$
+
+Since our last observed value is:
+```{r}
+acma[length(acma)]
+```
+And our $\Phi^{-1}(0.95)$ is:
+```{r}
+qnorm(0.95)
+```
+And our $\sigma^2$ is 0.04066, we have our 90% prediction interval to be:
+
+$3.17 \pm 0.33\sqrt{l}$
 
 
 
+**g)**
+
+As explained earlier, we know that our forecast for closing price at lead time l is always the last observed value of 3.17, so there would be no difference in the expected share price as time moves forward. So there is no advantage in selling or holding the shares at any point in time in the future. However, if he were to lock the shares for a period of time and then selling it, the longer he waits to sell the shares, the more risky it is, as we have shown that the prediction interval depends on l, and the prediction error increases as l increases. Thus, if he is not so much of a risk taker, it might be wise to not hold his shares for too long before selling them. 
 
 
 ## Question 2
@@ -105,7 +127,43 @@ acf(flow_d, main = "Autocorrelation")
 pacf(flow_d, main = "Partial Autocorrelation")
 ```
 
-From the plots, we can see that the data looks much more stationary, although there are still outliers in the middle of ACF and partial ACF plots. From this, we can try to use a ...
+From the plots, we can see that the data looks much more stationary, although there are still outliers in the middle of ACF and partial ACF plots. The PACF cut off at lag 1 and the exponential decay in the ACF suggests a P=1 model. Thus, we can fit a model that involve P=1, D=1.
+
+```{r}
+mod1 = arima(flow, order = c(0,0,0), seasonal = list(order=c(1,1,0), period = 12))
+mod1
+```
+
+I noticed that a similar model gives a smaller AIC:
+```{r}
+mod2 = arima(flow, order = c(1,0,0), seasonal = list(order=c(1,1,0), period = 12))
+mod2
+```
+
+Thus, I will choose my model based on SARIMA(1,0,0)(1,1,0) and do a prediction of the next 24 months using that.
+
+```{r}
+mod = mod2
+pred = predict(mod, 24)
+plot(pred$pred, col = "red", main = "Predicted and actual mean flows for the next 24 months",
+     xlab = "Month", ylab = "Mean flows")
+lines(flow.test, col = "blue")
+```
+
+The blue line represents the actual observations and the red line represents the predictions. They look very similar in terms of shape, and the predictions seem to be slightly higher than the actual observations.
+
+We can also look at the root mean squared error: 
+```{r}
+sqrt(mean(pred$pred - flow.test)^2)
+```
+
+The RMSE is 535, and given that the data is between 1000 to 7000, this error is thought to be reasonably small.
 
 
+We can also look at the 95% prediction intervals and see how many of the actual observations lie in it:
+```{r}
+sum((flow.test > pred$pred-qnorm(0.975)*pred$se) & (flow.test < pred$pred+qnorm(0.975)*pred$se))
+```
+
+Since 22 out of 24 of the observed values lie in the 95% prediction interval, the predictions are thought to be appropriate.
 
